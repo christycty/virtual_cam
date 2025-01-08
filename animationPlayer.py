@@ -10,8 +10,8 @@ class Animation:
         self.width = width
         self.height = height
         
-        self.x = x
-        self.y = y
+        self.x = max(0, x)
+        self.y = max(0, y)
         
         self.start_time = start_time
         self.duration = duration
@@ -61,24 +61,37 @@ class AnimationPlayer:
         
         # plot hand bounding box
         for result in classification_result:
-            # plot bounding box (top_left, bottom_right)
-            # unormalize the bounding box
+            # unnormalize the bounding box (x, y)
             top_left = (int(result["top_left"][0] * self.width), int(result["top_left"][1] * self.height))
             bottom_right = (int(result["bottom_right"][0] * self.width), int(result["bottom_right"][1] * self.height))
+            
+            # check boundary
+            top_left = (max(0, top_left[0]), max(0, top_left[1]))
+            bottom_right = (min(self.width, bottom_right[0]), min(self.height, bottom_right[1]))
+            
             frame = cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
             
             result_type = result["type"]
             if result_type not in self.assets:
                 continue
             
-            animation = Animation(self.assets[result_type], self.animation_size, self.animation_size, top_left[0], top_left[1], timestamp, 50)
+            # create animation object
+            animation = Animation(
+                path = self.assets[result_type], 
+                width = self.animation_size, 
+                height = self.animation_size,
+                x = top_left[0] - self.animation_size, 
+                y = top_left[1] - self.animation_size, 
+                start_time = timestamp, 
+                duration = 50
+            )
             
             self.current_animations.append(animation)
         
         if len(self.current_animations) == 0:
             return frame
             
-        # TODO: add animation to frame
+        # add animation to frame
         for animation in self.current_animations:
             # check if animation is still ongoing
             if animation.start_time + animation.duration < timestamp:
@@ -88,15 +101,7 @@ class AnimationPlayer:
             # fetch animation
             animation_graphic = animation.fetch_animation()
             
+            # replace frame segment with animation
             frame[animation.y:animation.y + self.animation_size, animation.x:animation.x + self.animation_size] = animation_graphic
-            
-            # TODO: animation overlay
-            '''animation = cv2.imread(self.assets[result_type])
-            
-            animation = cv2.resize(animation, (100, 100))
-            # pad to make animation frame
-            animation_frame = cv2.copyMakeBorder(animation, 0, self.height - self.animation_size, 0, self.width - self.animation_size, cv2.BORDER_CONSTANT, value=[0, 0, 0, 0])
-            
-            frame = cv2.addWeighted(frame, 1, animation_frame, 0.5, 0)'''
             
         return frame

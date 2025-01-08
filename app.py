@@ -1,4 +1,5 @@
 import cv2
+import pyvirtualcam
 from gestureDetector import GestureDetector
 from animationPlayer import AnimationPlayer
 
@@ -35,7 +36,8 @@ class App:
             
             self.result_frame = self.animationPlayer.process_frame(self.raw_frame, results, timestamp)
             
-            
+            # show result in cv2
+            # TODO: show result in pyvirtualcam with OBS
             cv2.imshow("Frame", self.result_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
