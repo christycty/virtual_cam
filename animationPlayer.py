@@ -27,6 +27,7 @@ class Animation:
         
         # TODO: animation mask for png animation
         # 1 if pixel is part of animation, 0 otherwise
+        # use alpha channel of png image during imread
         # self.animation_mask = None
         
     def fetch_animation(self) -> np.ndarray:
